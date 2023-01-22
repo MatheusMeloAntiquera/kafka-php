@@ -1,0 +1,58 @@
+version: "3.8"
+services:
+    # PHP service
+    app:
+        build: .
+        container_name: php-app
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+        networks:
+            - app-network
+
+    # MySQL database service
+    db:
+        image: mysql:5.7
+        container_name: mysql-db
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: 12345
+            MYSQL_DATABASE: kafka-php8
+            MYSQL_USER: kafka-php8
+            MYSQL_PASSWORD: 12345
+        networks:
+            - app-network
+    # Nginx service
+    nginx:
+        image: nginx:alpine
+        container_name: php-nginx
+        ports:
+            - 8000:80
+        volumes:
+            - ./:/var/www
+            - ./nginx/conf.d/:/etc/nginx/conf.d/
+        networks:
+            - app-network
+    zookeeper:
+        image: "bitnami/zookeeper:latest"
+        ports:
+            - "2181:2181"
+        environment:
+            - ALLOW_ANONYMOUS_LOGIN=yes
+    kafka:
+        image: "bitnami/kafka:latest"
+        ports:
+            - "9092:9092"
+        environment:
+            - KAFKA_BROKER_ID=1
+            - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+            - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://127.0.0.1:9092
+            - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+            - ALLOW_PLAINTEXT_LISTENER=yes
+        depends_on:
+            - zookeeper
+
+networks:
+    app-network:
+        driver: bridge
