@@ -1,19 +1,17 @@
 version: "3.8"
 services:
-    # PHP service
     app:
         build: .
-        container_name: php-app
+        container_name: kafka-php-app
         working_dir: /var/www/
         volumes:
+            - ./docker/php/conf.d:/usr/local/etc/php/conf.d
             - ./:/var/www
         networks:
-            - app-network
-
-    # MySQL database service
+            - kafka-php-network
     db:
         image: mysql:5.7
-        container_name: mysql-db
+        container_name: kafka-mysql-db
         ports:
             - "3306:3306"
         environment:
@@ -22,26 +20,29 @@ services:
             MYSQL_USER: kafka-php8
             MYSQL_PASSWORD: 12345
         networks:
-            - app-network
-    # Nginx service
+            - kafka-php-network
     nginx:
         image: nginx:alpine
-        container_name: php-nginx
+        container_name: kafka-php-nginx
         ports:
             - 8000:80
         volumes:
             - ./:/var/www
-            - ./nginx/conf.d/:/etc/nginx/conf.d/
+            - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
         networks:
-            - app-network
+            - kafka-php-network
     zookeeper:
         image: "bitnami/zookeeper:latest"
+        container_name: kafka-php-zookeeper
         ports:
             - "2181:2181"
         environment:
             - ALLOW_ANONYMOUS_LOGIN=yes
+        networks:
+            - kafka-php-network
     kafka:
         image: "bitnami/kafka:latest"
+        container_name: kafka-php-kafka
         ports:
             - "9092:9092"
         environment:
@@ -52,7 +53,8 @@ services:
             - ALLOW_PLAINTEXT_LISTENER=yes
         depends_on:
             - zookeeper
-
+        networks:
+            - kafka-php-network
 networks:
-    app-network:
+    kafka-php-network:
         driver: bridge
