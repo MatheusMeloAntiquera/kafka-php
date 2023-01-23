@@ -7,3 +7,6 @@ This is a simple project with:
 - PHP8
 - Nginx
 - Mysql
+
+# Ref
+https://github.com/arnaud-lb/php-rdkafka
